@@ -1,0 +1,19 @@
+{
+    "password": "12345",
+    "playlists": [
+        {
+            "name": "Mera naam playlist hai",
+            "songs": [
+                {
+                    "address": "This is my address",
+                    "name": "hello world"
+                },
+                {
+                    "address": "This is my 2nd address",
+                    "name": "hello world"
+                }
+            ]
+        }
+    ],
+    "username": "Jamaal"
+}

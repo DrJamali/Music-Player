@@ -4,7 +4,9 @@
             "name": "Win32",
             "includePath": [
                 "${workspaceFolder}/**",
-                "C:\\Users\\USIBG\\Downloads\\SFML-2.6.1-windows-gcc-13.1.0-mingw-64-bit\\SFML-2.6.1\\include"
+                "C:\\Users\\USIBG\\Downloads\\SFML-2.6.1-windows-gcc-13.1.0-mingw-64-bit\\SFML-2.6.1\\include",
+                "C:\\Users\\USIBG\\Downloads\\json-develop\\json-develop\\include",
+                "${workspaceFolder}"
             ],
             "defines": [
                 "_DEBUG",
