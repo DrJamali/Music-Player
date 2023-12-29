@@ -126,10 +126,13 @@ public:
     }
     void display_songs()
     {
+        int i = 0;
         for (Song x : songs)
         {
-            cout << x.getName() << endl;
-            cout << x.getAddress() << endl;
+            cout << i << endl;
+            cout << "Song name: " << x.getName() << endl;
+            cout << "Song address: " << x.getAddress() << endl;
+            i++;
         }
     }
     Song *return_song_obj(int index)
@@ -154,20 +157,24 @@ public:
         // You may also want to include playlists and songs here if needed
         return user_json;
     }
-    static Playlist from_json(const json &playlist_json)
+    static Playlist *from_json(const json &playlist_json)
     {
-        Playlist P1;
-        P1.name = playlist_json.at("name").get<std::string>();
+        Playlist *P1 = new Playlist();
+        P1->name = playlist_json.at("name").get<std::string>();
 
         // Assuming you have a 'songs' array in your JSON representing the playlist's songs
         json songs_json = playlist_json.at("songs");
         for (const auto &song_json : songs_json)
         {
             Song *S1 = Song::from_json(song_json);
-            P1.songs.push_back(*S1);
+            P1->songs.push_back(*S1);
         }
 
         return P1;
+    }
+    void delete_object(int i)
+    {
+        songs.erase(songs.begin() + i);
     }
 };
 
@@ -201,11 +208,11 @@ public:
         return user_json;
     }
     // Deserialize the User object from JSON
-    static User from_json(const json &user_json)
+    static User *from_json(const json &user_json)
     {
-        User user;
-        user.username = user_json.at("username").get<std::string>();
-        user.password = user_json.at("password").get<std::string>();
+        User *user = new User();
+        user->username = user_json.at("username").get<std::string>();
+        user->password = user_json.at("password").get<std::string>();
 
         // Deserialize playlists
         if (user_json.find("playlists") != user_json.end())
@@ -213,7 +220,7 @@ public:
             const json &playlists_json = user_json["playlists"];
             for (const auto &playlist_json : playlists_json)
             {
-                user.playlists.push_back(Playlist::from_json(playlist_json));
+                user->playlists.push_back(*(Playlist::from_json(playlist_json)));
             }
         }
 
@@ -231,14 +238,18 @@ public:
     {
         playlists.push_back(*p1);
     }
+    Playlist get_playlist(int i)
+    {
+        return playlists[i];
+    }
     void display_playlist()
     {
         cout << playlists.size() << endl;
 
         for (int i = 0; i < playlists.size(); i++)
         {
-
-            cout << playlists[i].get_playlist_name() << endl;
+            cout << i + 1 << "Playlist name: " << playlists[i].get_playlist_name() << endl;
+            cout << "Playlist Songs: " << endl;
             playlists[i].display_songs();
         }
     }
@@ -255,8 +266,9 @@ class Controller
 {
 public:
     static void addSong(User user, Playlist playlist, Song song) {}
-    static User createUser()
+    static User *createUser()
     {
+
         cout << "Hey Welcome to our Music Player" << endl;
         cout << "Press 1 for Signing in" << endl;
         cout << "Press 2 for Signing up" << endl;
@@ -269,12 +281,28 @@ public:
             cin >> name;
             cout << "Enter your Password" << endl;
             cin >> password;
-            User U1(name, password);
-            return U1;
+
+            return new User(name, password);
         }
-        else
+        else if (ch == '2')
         {
-            cout << "kuch nhi";
+            User *U1 = new User();
+            string username, password, saved_pass;
+            cout << "Enter Your Username" << endl;
+            cin >> username;
+            U1 = Controller::json_from_file(username);
+            cout << "Enter Your Password" << endl;
+            cin >> password;
+            saved_pass = U1->get_password();
+            if (saved_pass == password)
+            {
+                cout << "Jaane doo" << endl;
+                return U1;
+            }
+            else
+            {
+                cout << "Tu chutti kar mera puat" << endl;
+            }
         }
     }
     static Song *Song_addition()
@@ -289,102 +317,74 @@ public:
         Pop_Song *S1 = new Pop_Song(name, address);
         return S1;
     }
-    static Playlist create_playlist(Playlist untitled)
+    static Playlist *create_playlist(Playlist &untitled)
     {
         string playlist_name;
         int index;
         cout << "Enter Your Playlist Name" << endl;
         cin >> playlist_name;
-        Playlist p1(playlist_name);
+        Playlist *p1 = new Playlist(playlist_name);
         untitled.display_songs();
         cout << "Choose the Song and enter its Number" << endl;
         cin >> index;
         Song *ptr = untitled.return_song_obj(index);
-        p1.add_songs_to_playlist(ptr);
+        p1->add_songs_to_playlist(ptr);
         return p1;
+    }
+    static void json_to_file(User &save, string file_name)
+    {
+
+        file_name=".\\log_files\\" +file_name+".json";
+        cout<<file_name<<endl;
+        json user_json = save.to_json();
+        std::ofstream file(file_name);
+        file << std::setw(4) << user_json; // Pretty print with indentation
+        file.close();
+    }
+    static User *json_from_file(string file_name)
+    {
+        {
+            file_name = file_name + ".json";
+            std::ifstream infile(file_name);
+            json loaded_json;
+            infile >> loaded_json;
+            User *loaded_user = User::from_json(loaded_json);
+            return loaded_user;
+        }
+    }
+    static void Menu()
+    {
+        cout<<"To add a new song press 1"<<endl;
+        cout<<"To remove a song press 2"<<endl;
+        cout<<"TO add a new Playlist press 3"<<endl;
+        cout<<"To edit an existing Playlist press 4"<<endl;
+        cout<<"To display Playlists and Songs Press 5"<<endl;
     }
 };
 int main()
 {
-    Pop_Song p1("", "This is my address");
-    Pop_Song p2("hello world", "This is my 2nd address");
-    // json user_json=p1.to_json();
-    // cout<<"I am still running"<<endl;
-    //  std::ofstream file("song.json");
-    // file << std::setw(4) << user_json; // Pretty print with indentation
-    // file.close();
-    // // sleep(200);
-    Playlist pla("Mera naam playlist hai");
-    pla.add_songs_to_playlist(&p1);
-    pla.add_songs_to_playlist(&p2);
-    cout << "Still runnnnnnnnnnnnnnnnnnn..." << endl;
-    sleep(20);
-    User U1 = User("Jamaal", "12345");
-    U1.create_playlist(&pla);
-    json user_json = U1.to_json();
-    cout << "Still runnnnnnnnnnnnnnnnnnn..." << endl;
-    std::ofstream file("U3.json");
-    file << std::setw(4) << user_json; // Pretty print with indentation
-    file.close();
-    // std::ifstream infile("user.json");
-    // json loaded_json;
-    // infile >> loaded_json;
+    // User *U1 = Controller::createUser();
+    // U1->display_playlist();
 
-    // Deserialize from JSON
-    // User loaded_user = User::from_json(loaded_json);
-    // cout << loaded_user.get_password() << endl;
-    // cout << loaded_user.get_username() << endl;
-    // Controller C1;
-    // User U1 = C1.createUser();
-    // Song *S1 = C1.Song_addition();
+
+    
+    // User *U2 = Controller::createUser();
+    // Song* S1=Controller::Song_addition();
+    // Song* S2=Controller::Song_addition();
     // Playlist p1("Untitled");
     // p1.add_songs_to_playlist(S1);
-    // U1.create_playlist(&p1);
-    // Playlist p2 = C1.create_playlist(p1);
-    // U1.create_playlist(&p2);
-    // U1.display_playlist();
-    // U1.to_json();
-    // string soundFilePath = S1->getAddress();
-    // cout << "Still running: 1" << endl;
-    // json user_json = U1.to_json();
-    //   std::string jsonString = user_json.dump();
-
-    // // Save the JSON string to a text file
-    // std::ofstream file("output.txt");
-    // if (file.is_open()) {
-    //     file << jsonString;
-    //     file.close();
-    //     std::cout << "JSON data saved to output.txt" << std::endl;
-    // } else {
-    //     std::cerr << "Unable to open the file." << std::endl;
-    // }
-    // ofstream file1;
-    // file1.open("text.txt", ios::app);
-    // file1.write((char *)&U1, sizeof(U1));
-    // file1.close();
-    // User U2;
-    // ifstream file2;
-    // file2.open("Employee.txt", ios::in);
-    // file2.seekg(0);
-    // file2.read((char *)&U2, sizeof(U2));
-    // cout << U2.get_username() << endl;
-    // cout << U2.get_password() << endl;
-    // U2.display_playlist();
-    // sleep(1000);
-    // Load the sound file
-    // sf::SoundBuffer buffer;
-    // if (!buffer.loadFromFile(soundFilePath))
-    // {
-    //     std::cerr << "Failed to load the sound file." << std::endl;
-    //     return 1;
-    // }
-    // sf::Sound sound(buffer);
-    // sound.play();
-    // cout << "i am still running";
-    // cout << sound.getStatus() << endl;
-    // while (sound.getStatus())
-    // {
-    // };
-    // cout << sound.getStatus() << endl;
-    sleep(100);
+    // p1.add_songs_to_playlist(S2);
+    // U2->create_playlist(&p1);
+    // Playlist* p2=Controller::create_playlist(p1);
+    // U2->create_playlist(p2);
+    User U2("jamali","1234");
+    Controller::json_to_file(U2,"random_user");
+    // Playlist P1 = U1->get_playlist(0);
+    // Playlist *P2 = Controller::create_playlist(P1);
+    // U1->create_playlist(P2);
+    // cout << "pehla rola muka" << endl;
+    // sleep(20);
+    // U1->display_playlist();
+    sleep(225);
+    return 0;
 }
