@@ -5,7 +5,7 @@
 
 int main() {
     // Full path to the sound file on the D drive
-    const std::string soundFilePath = "D:\\Chaal-Chal-Tu-Apni-Main-Tujhe-Pahchan-Lunga(PaglaSongs).wav";
+    const std::string soundFilePath = "D:\Chaal-Chal-Tu-Apni-Main-Tujhe-Pahchan-Lunga(PaglaSongs).wav";
 
     // Load the sound file
     sf::SoundBuffer buffer;

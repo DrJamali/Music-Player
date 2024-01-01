@@ -1,5 +1,27 @@
 {
-    "password": "1234",
-    "playlists": [],
-    "username": "jamali"
+    "password": "1234567",
+    "playlists": [
+        {
+            "name": "untitled",
+            "songs": [
+                {
+                    "address": "D:\\Songs\\baghawat-30sec.wav",
+                    "name": "Baghawat_short"
+                },
+                {
+                    "address": "D:\\Songs\\Baghawat.wav",
+                    "name": "Baghawat_long"
+                },
+                {
+                    "address": "D:\\Songs\\Chaal-Chal-Tu-Apni-Main-Tujhe-Pahchan-Lunga(PaglaSongs).wav",
+                    "name": "Chaal Chal tu apni"
+                },
+                {
+                    "address": "D:\\Songs\\e-shikwa-natasha-baig-fareed-ayaz-and-abu-muhammad-qawwal.wav",
+                    "name": "Ki Muhammad SAW se wafa tune"
+                }
+            ]
+        }
+    ],
+    "username": "Random_User"
 }
