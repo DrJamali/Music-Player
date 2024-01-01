@@ -14,6 +14,7 @@
 using namespace std;
 using json = nlohmann::json;
 int Old_User_Flag = 0;
+int width;
 class Song
 {
 protected:
@@ -259,15 +260,66 @@ public:
     }
 };
 
-class File_Handaling
+class Interface_
 {
+
 public:
-    DIR *dir;
-    struct dirent *entry;
-    struct stat fileStat;
+    static void gotox(int x)
+    {
+        COORD c;
+        c.X = x;
+
+        SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), c);
+        return;
+    }
+    static void gotoxy(int x, int y)
+    {
+        COORD c;
+        c.X = x;
+        c.Y = y;
+        SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), c);
+        return;
+    }
+    static void gotoy(int y)
+    {
+        COORD c;
+        c.Y = y;
+        SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), c);
+        return;
+    }
+
+    static int getConsoleSize()
+    {
+        CONSOLE_SCREEN_BUFFER_INFO csbi;
+        GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
+        width = csbi.srWindow.Right - csbi.srWindow.Left + 1;
+        return 0;
+    }
+
+    static void printStarLine(int length, int x, int y)
+    {
+        gotoxy(x, y);
+        for (int i = 0; i < length; i++)
+        {
+            cout << "*";
+        }
+    }
+    static void display_interace()
+    {
+
+        getConsoleSize();
+        printStarLine(width, 0, 0);
+        cout << endl;
+        string heading = "Welcome to Our Music Player";
+        int middle = (width - heading.size()) / 2;
+        gotoxy(middle, 3);
+        cout << heading << endl;
+        printStarLine(width, 0, 4);
+    }
 };
 class Controller
 {
+
 public:
     static void addSong(User user, Playlist playlist, Song song) {}
     static User *createUser()
@@ -496,7 +548,7 @@ public:
             p1.display_songs();
             cout << "To loop over whole Playlist press i" << endl;
             cout << "To play a single Song Press o" << endl;
-            cout<<"Press m to go to main menu" << endl;
+            cout << "Press m to go to main menu" << endl;
             cout << "Press q to quit" << endl;
             char ch = getch();
             int loop_flag = 0;
@@ -529,7 +581,8 @@ public:
                     loop_flag = Controller::player(s1, 0);
                 }
             }
-            else if(ch=='m'){
+            else if (ch == 'm')
+            {
                 return;
             }
         }
@@ -537,6 +590,8 @@ public:
 
     static int player(Song s1, bool loop_playlist)
     {
+        system("cls");
+        Interface_::display_interace();
 
         float volume;
         int loop = 0;
@@ -548,21 +603,51 @@ public:
             sleep(100);
             exit(0);
         }
-        cout<<"Current Song: "<<s1.getName()<<endl;
-        cout << "Music Started!" << endl;
-        music.play();
 
         cout << "To play a song press Spacebar" << endl;
         cout << "To stop a song press s" << endl;
         cout << "press l for loop on song" << endl;
         cout << "To pause the song press p" << endl;
         cout << "To go to Player Menu or break the playlist loop press c" << endl;
-
         cout << "press q to quit" << endl;
-
+        cout << "Current Song: " << s1.getName() << endl;
+        cout << "Music Started!" << endl;
+        music.play();
+        Interface_::gotox(102);
+        Interface_::gotoy(18);
+        cout << "Voloume: ";
         while (true)
         {
             sf::sleep(sf::milliseconds(150));
+            sf::Time position = music.getPlayingOffset();
+            sf::Time duration = music.getDuration();
+
+            float progress = position.asSeconds() / duration.asSeconds();
+
+            int barWidth = 50;
+            int numAsterisks = static_cast<int>(progress * barWidth);
+
+            // Print the music bar
+            Interface_::gotox(28);
+            Interface_::gotoy(20);
+
+            cout << "Sound Bar "
+                 << "[";
+            for (int i = 0; i < barWidth; ++i)
+            {
+                if (i < numAsterisks)
+                {
+
+                    cout << "*";
+                }
+                else
+                {
+                    cout << " ";
+                }
+            }
+            cout << "] " << progress * 100 << "%";
+            cout.flush();
+
             if (music.getStatus() == sf::Music::Status::Stopped)
             {
                 if (loop == false)
@@ -607,16 +692,17 @@ public:
                 else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
                 {
                     volume = music.getVolume();
-                    if (volume < 100)
+                    if (volume <= 100)
                     {
                         volume++;
                         music.setVolume(volume);
                     }
-                    else if (volume = 100)
-                    {
-                        cout << "Maximum volume Reached!" << endl;
-                    }
-                    cout << "Volume: " << volume << endl;
+                    Interface_::gotox(110);
+                    Interface_::gotoy(18);
+                    cout << "     ";
+                    Interface_::gotox(110);
+                    Interface_::gotoy(18);
+                    cout << volume;
                 }
                 else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
                 {
@@ -626,15 +712,22 @@ public:
                         volume--;
                         music.setVolume(volume);
                     }
-                    cout << "Volume: " << volume << endl;
+                    Interface_::gotox(110);
+                    Interface_::gotoy(18);
+                    cout << "     ";
+                    Interface_::gotox(110);
+                    Interface_::gotoy(18);
+                    cout << volume;
                 }
             }
         }
     }
 };
+
 int main()
 {
-
+    system("cls");
+    Interface_::display_interace();
     Controller::Main_Menu();
     return 0;
 }
