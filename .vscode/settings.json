@@ -73,5 +73,6 @@
         "typeinfo": "cpp",
         "valarray": "cpp",
         "variant": "cpp"
-    }
+    },
+    "cmake.sourceDirectory": "D:/Project/Music Player/json-develop/json-develop"
 }

@@ -1,19 +1,22 @@
 #include <iostream>
-#include <chrono>
 #include <ctime>
+#include <string>
+using namespace std;
+int main()
+{
+    // Get the current time in seconds since the Epoch
+    std::time_t currentTime = std::time(nullptr);
 
-int main() {
-    // Get the current time point
-    auto currentTimePoint = std::chrono::system_clock::now();
+    // Convert the time to a local time structure
+    std::tm *timeInfo = std::localtime(&currentTime);
 
-    // Convert the time point to a time_t object
-    std::time_t currentTime = std::chrono::system_clock::to_time_t(currentTimePoint);
-
-    // Convert the time_t object to a tm structure
-    struct std::tm* timeInfo = std::localtime(&currentTime);
-
-    // Print the current time
-    std::cout << "Current time: " << std::asctime(timeInfo);
+    // Extract the time components
+    string hours = to_string(timeInfo->tm_hour);
+    string minutes = to_string(timeInfo->tm_min);
+    string seconds = to_string(timeInfo->tm_sec);
+    string time_ = hours + ":" + minutes + ":" + seconds;
+    // Print the time
+    std::cout << "Current time: " << time_ << endl;
 
     return 0;
 }

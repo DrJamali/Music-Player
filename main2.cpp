@@ -11,6 +11,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <fstream>
+#include <ctime>
 using namespace std;
 using json = nlohmann::json;
 int Old_User_Flag = 0;
@@ -317,6 +318,123 @@ public:
         printStarLine(width, 0, 4);
     }
 };
+class Suggestions
+{
+    int time;
+    Song song;
+    int count;
+
+public:
+    vector<Suggestions> suggestions;
+
+    int get_time()
+    {
+        std::time_t currentTime = std::time(nullptr);
+
+        // Convert the time to a local time structure
+        std::tm *timeInfo = std::localtime(&currentTime);
+
+        return timeInfo->tm_hour;
+    }
+    void add_suggestion_to_json(Song s1)
+    {
+        song = s1;
+        time = get_time();
+        json new_suggestion = song.to_json();
+        new_suggestion["Time"] = time;
+        // Read existing content from the file
+        std::ifstream file_in(".\\log_files\\suggestions.json");
+        json existing_content;
+        file_in >> existing_content;
+        file_in.close();
+        // Add the new suggestion to the existing content
+        existing_content.push_back(new_suggestion);
+        // Write the modified content back to the file
+        std::ofstream file_out(".\\log_files\\suggestions.json");
+        file_out << std::setw(4) << existing_content;
+        file_out.close();
+    }
+    void load_suggestion_from_json()
+    {
+        cout << "Yahan tak aagaya mein" << endl;
+        json loaded;
+        ifstream file_in(".\\log_files\\suggestions.json");
+        file_in >> loaded;
+        static int quater;
+        if (get_time() <= 6)
+        {
+            quater = 6;
+        }
+        else if (get_time() <= 12)
+        {
+            quater = 12;
+        }
+        else if (get_time() <= 18)
+        {
+            quater = 18;
+        }
+        else if (get_time() <= 24)
+        {
+            quater = 24;
+        }
+
+        for (auto &x : loaded)
+        {
+            if (x.at("Time").get<int>() >= quater)
+            {
+                continue;
+            }
+            Suggestions new_suggestions;
+            new_suggestions.song.setName(x.at("name").get<string>());
+            new_suggestions.song.setAddress(x.at("address").get<string>());
+            new_suggestions.time = (x.at("Time").get<int>());
+            this->suggestions.push_back(new_suggestions);
+        }
+    }
+    void sort_suggestions()
+    {
+        for (int i = 0; i < suggestions.size(); i++)
+        {
+            Suggestions &s1 = suggestions[i]; // Use a reference here
+            s1.count = 1;
+
+            for (int j = i + 1; j < suggestions.size(); j++)
+            {
+                if (s1.song.getName() == suggestions[j].song.getName())
+                {
+                    s1.count++;
+                    suggestions.erase(suggestions.begin() + j);
+                    j--; // Adjust the index after erasing an element
+                }
+            }
+        }
+        for (int i = 0; i < suggestions.size() - 1; i++)
+        {
+            for (int j = i + 1; j < suggestions.size(); j++)
+            {
+                if (suggestions[i].count < suggestions[j].count)
+                {
+                    swap(suggestions[j], suggestions[i]);
+                }
+            }
+        }
+    }
+    void display_suggestions()
+    {
+        this->load_suggestion_from_json();
+        cout << "Ye pehli pahaari gayi" << endl;
+        sort_suggestions();
+
+        for (auto x : suggestions)
+        {
+            cout << x.song.getAddress() << endl;
+            cout << x.song.getName() << endl;
+            cout << x.count << endl;
+        }
+
+        cout << "at the end" << endl;
+    }
+};
 class Controller
 {
 
@@ -479,7 +597,8 @@ public:
             cout << "To remove a song press 2" << endl;
             cout << "TO add a new Playlist press 3" << endl;
             cout << "To display Playlists and Songs Press 4" << endl;
-            cout << "To save your data press s" << endl;
+            cout << "To save your data press 5" << endl;
+            cout << "To Display Suggestions press s" << endl;
             ch = getch();
             if (ch == '1')
             {
@@ -521,9 +640,15 @@ public:
             {
                 Controller::player_menu(*U1);
             }
-            else if (ch == 's')
+            else if (ch == '5')
             {
                 Controller::json_to_file(*U1);
+            }
+            else if (ch == 's')
+            {
+                cout << "S accepted" << endl;
+                Suggestions s1;
+                s1.display_suggestions();
             }
             else
             {
@@ -590,6 +715,8 @@ public:
 
     static int player(Song s1, bool loop_playlist)
     {
+        Suggestions su1;
+        su1.add_suggestion_to_json(s1);
         system("cls");
         Interface_::display_interace();
 
@@ -729,5 +856,19 @@ int main()
     system("cls");
     Interface_::display_interace();
     Controller::Main_Menu();
+    Suggestions s1;
+    // s1.load_suggestion_from_json();
+    // s1.display_suggestions();
+    // s1.sort_suggestions();
+    // s1.display_suggestions();
+    // sleep(200);
+    // Song s1("hello", "Heyyy");
+    // Song s2("bello", "jello");
+    // Song s3("tello", "jettto");
+    // Suggestions su1;
+    // su1.add_suggestion_to_json(s1);
+    // su1.add_suggestion_to_json(s2);
+    // su1.add_suggestion_to_json(s3);
+
     return 0;
 }
