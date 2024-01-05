@@ -422,18 +422,25 @@ public:
     void display_suggestions()
     {
         this->load_suggestion_from_json();
-        cout << "Ye pehli pahaari gayi" << endl;
+        // cout << "Ye pehli pahaari gayi" << endl;
         sort_suggestions();
-
+        int i;
         for (auto x : suggestions)
         {
+            cout << "Song Number: " << i << endl;
             cout << x.song.getAddress() << endl;
             cout << x.song.getName() << endl;
             cout << x.count << endl;
+            i++;
         }
 
-        cout << "at the end" << endl;
+        cout << "Select the number of Song You want to Play" << endl;
+        int index;
+        cin >> index;
+        call_controller(index);
+
     }
+    void call_controller(int index);
 };
 class Controller
 {
@@ -850,13 +857,16 @@ public:
         }
     }
 };
+void Suggestions::call_controller(int index)
+{
+    Controller::player(suggestions[index].song,0);
+}
 
 int main()
 {
     system("cls");
     Interface_::display_interace();
     Controller::Main_Menu();
-    Suggestions s1;
     // s1.load_suggestion_from_json();
     // s1.display_suggestions();
     // s1.sort_suggestions();
