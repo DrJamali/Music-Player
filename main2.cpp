@@ -438,7 +438,6 @@ public:
         int index;
         cin >> index;
         call_controller(index);
-
     }
     void call_controller(int index);
 };
@@ -606,6 +605,7 @@ public:
             cout << "To display Playlists and Songs Press 4" << endl;
             cout << "To save your data press 5" << endl;
             cout << "To Display Suggestions press s" << endl;
+            cout << "To Find the any song press f " << endl;
             ch = getch();
             if (ch == '1')
             {
@@ -656,6 +656,36 @@ public:
                 cout << "S accepted" << endl;
                 Suggestions s1;
                 s1.display_suggestions();
+            }
+            else if (ch == 'f')
+            {
+                string song_name;
+                int flag;
+                cout << "Enter your Song name: " << endl;
+                cin.ignore();
+                getline(cin, song_name);
+
+                for (int i = 0; i < U1->playlists.size(); i++)
+                {
+                    flag = 0;
+                    for (int j = 0; j < U1->playlists[i].songs.size(); j++)
+                    {
+                        if (U1->playlists[i].songs[j].getName() == song_name)
+                        {
+                            cout << "Your Song is in... "
+                                 << "Playlist No: " << i << "Song Number: " << j << endl;
+                            flag = 1;
+                        }
+                        cout<<U1->playlists[i].songs[j].getName()<<endl;
+                        cout<<"Song name is "<<song_name<<endl;
+                    }
+                }
+                if (flag == 0)
+                {
+
+                    cout << "Found Nothing" << endl
+                         << "Try with different name" << endl;
+                }
             }
             else
             {
@@ -859,7 +889,7 @@ public:
 };
 void Suggestions::call_controller(int index)
 {
-    Controller::player(suggestions[index].song,0);
+    Controller::player(suggestions[index].song, 0);
 }
 
 int main()
