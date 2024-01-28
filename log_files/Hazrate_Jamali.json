@@ -1,0 +1,19 @@
+{
+    "password": "Pak@2019@",
+    "playlists": [
+        {
+            "name": "untitled",
+            "songs": []
+        },
+        {
+            "name": "Quran",
+            "songs": [
+                {
+                    "address": "D:\\Songs\\naba-the-announcement-full-by-sheikh-abdur-rahman-as-sudais-with-text-78-swr-lnb.wav",
+                    "name": "Surah Naba"
+                }
+            ]
+        }
+    ],
+    "username": "Hazrate_Jamali"
+}

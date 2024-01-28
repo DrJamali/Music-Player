@@ -467,7 +467,7 @@ public:
         {
             string playlist_name;
             cout << "Enter Your Playlist Name: " << endl;
-            cin >> playlist_name;
+            getline(cin, playlist_name);
             Playlist *p1 = new Playlist(playlist_name);
             u1.playlists[0].display_songs();
             cout << "Choose the Song and enter its Number: ";
