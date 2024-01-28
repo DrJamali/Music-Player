@@ -1,6 +1,7 @@
 #include <SFML/Audio.hpp>
 #include <SFML/Window.hpp>
 #include <SFML/Audio/SoundStream.hpp>
+#include<SFML/System.hpp>
 #include <nlohmann/json.hpp>
 #include <iostream>
 #include <Windows.h>
@@ -320,126 +321,43 @@ public:
 };
 class Suggestions
 {
-    int time;
-    Song song;
-    int count;
+    string time;
 
 public:
-    vector<Suggestions> suggestions;
-
-    int get_time()
+    string get_time()
     {
         std::time_t currentTime = std::time(nullptr);
 
         // Convert the time to a local time structure
         std::tm *timeInfo = std::localtime(&currentTime);
 
-        return timeInfo->tm_hour;
+        // Extract the time components
+        string hours = to_string(timeInfo->tm_hour);
+        string minutes = to_string(timeInfo->tm_min);
+        string seconds = to_string(timeInfo->tm_sec);
+        string time_ = hours + ":" + minutes + ":" + seconds;
+        return time_;
     }
     void add_suggestion_to_json(Song s1)
     {
-        song = s1;
         time = get_time();
-        json new_suggestion = song.to_json();
+        json new_suggestion = s1.to_json();
         new_suggestion["Time"] = time;
+
         // Read existing content from the file
         std::ifstream file_in(".\\log_files\\suggestions.json");
         json existing_content;
         file_in >> existing_content;
         file_in.close();
+
         // Add the new suggestion to the existing content
         existing_content.push_back(new_suggestion);
+
         // Write the modified content back to the file
         std::ofstream file_out(".\\log_files\\suggestions.json");
         file_out << std::setw(4) << existing_content;
         file_out.close();
     }
-    void load_suggestion_from_json()
-    {
-        cout << "Yahan tak aagaya mein" << endl;
-        json loaded;
-        ifstream file_in(".\\log_files\\suggestions.json");
-        file_in >> loaded;
-        static int quater;
-        if (get_time() <= 6)
-        {
-            quater = 6;
-        }
-        else if (get_time() <= 12)
-        {
-            quater = 12;
-        }
-        else if (get_time() <= 18)
-        {
-            quater = 18;
-        }
-        else if (get_time() <= 24)
-        {
-            quater = 24;
-        }
-
-        for (auto &x : loaded)
-        {
-            if (x.at("Time").get<int>() >= quater)
-            {
-                continue;
-            }
-            Suggestions new_suggestions;
-            new_suggestions.song.setName(x.at("name").get<string>());
-            new_suggestions.song.setAddress(x.at("address").get<string>());
-            new_suggestions.time = (x.at("Time").get<int>());
-            this->suggestions.push_back(new_suggestions);
-        }
-    }
-    void sort_suggestions()
-    {
-        for (int i = 0; i < suggestions.size(); i++)
-        {
-            Suggestions &s1 = suggestions[i]; // Use a reference here
-            s1.count = 1;
-
-            for (int j = i + 1; j < suggestions.size(); j++)
-            {
-                if (s1.song.getName() == suggestions[j].song.getName())
-                {
-                    s1.count++;
-                    suggestions.erase(suggestions.begin() + j);
-                    j--; // Adjust the index after erasing an element
-                }
-            }
-        }
-        for (int i = 0; i < suggestions.size() - 1; i++)
-        {
-            for (int j = i + 1; j < suggestions.size(); j++)
-            {
-                if (suggestions[i].count < suggestions[j].count)
-                {
-                    swap(suggestions[j], suggestions[i]);
-                }
-            }
-        }
-    }
-    void display_suggestions()
-    {
-        this->load_suggestion_from_json();
-        // cout << "Ye pehli pahaari gayi" << endl;
-        sort_suggestions();
-        int i;
-        for (auto x : suggestions)
-        {
-            cout << "Song Number: " << i << endl;
-            cout << x.song.getAddress() << endl;
-            cout << x.song.getName() << endl;
-            cout << x.count << endl;
-            i++;
-        }
-
-        cout << "Select the number of Song You want to Play" << endl;
-        int index;
-        cin >> index;
-        call_controller(index);
-    }
-    void call_controller(int index);
 };
 class Controller
 {
@@ -603,9 +521,7 @@ public:
             cout << "To remove a song press 2" << endl;
             cout << "TO add a new Playlist press 3" << endl;
             cout << "To display Playlists and Songs Press 4" << endl;
-            cout << "To save your data press 5" << endl;
-            cout << "To Display Suggestions press s" << endl;
-            cout << "To Find the any song press f " << endl;
+            cout << "To save your data press s" << endl;
             ch = getch();
             if (ch == '1')
             {
@@ -647,45 +563,9 @@ public:
             {
                 Controller::player_menu(*U1);
             }
-            else if (ch == '5')
-            {
-                Controller::json_to_file(*U1);
-            }
             else if (ch == 's')
             {
-                cout << "S accepted" << endl;
-                Suggestions s1;
-                s1.display_suggestions();
-            }
-            else if (ch == 'f')
-            {
-                string song_name;
-                int flag;
-                cout << "Enter your Song name: " << endl;
-                cin.ignore();
-                getline(cin, song_name);
-
-                for (int i = 0; i < U1->playlists.size(); i++)
-                {
-                    flag = 0;
-                    for (int j = 0; j < U1->playlists[i].songs.size(); j++)
-                    {
-                        if (U1->playlists[i].songs[j].getName() == song_name)
-                        {
-                            cout << "Your Song is in... "
-                                 << "Playlist No: " << i << "Song Number: " << j << endl;
-                            flag = 1;
-                        }
-                        cout<<U1->playlists[i].songs[j].getName()<<endl;
-                        cout<<"Song name is "<<song_name<<endl;
-                    }
-                }
-                if (flag == 0)
-                {
-
-                    cout << "Found Nothing" << endl
-                         << "Try with different name" << endl;
-                }
+                Controller::json_to_file(*U1);
             }
             else
             {
@@ -752,22 +632,27 @@ public:
 
     static int player(Song s1, bool loop_playlist)
     {
-        Suggestions su1;
-        su1.add_suggestion_to_json(s1);
         system("cls");
         Interface_::display_interace();
-
         float volume;
         int loop = 0;
-        string soundFilePath = s1.getAddress();
+        // string soundFilePath = s1.getAddress();
+        cout<<"lap 3"<<endl;
+        // cout<<soundFilePath<<endl;
         sf::Music music;
-        if (!music.openFromFile(soundFilePath))
+        string temp = s1.getAddress();
+        if (music.openFromFile(temp))
+        {
+            cerr << "File Loaded" << endl;
+            
+        }
+        else
         {
             cerr << "Failed to load the sound file." << endl;
-            sleep(100);
+            sleep(20);
             exit(0);
         }
-
+        
         cout << "To play a song press Spacebar" << endl;
         cout << "To stop a song press s" << endl;
         cout << "press l for loop on song" << endl;
@@ -777,6 +662,7 @@ public:
         cout << "Current Song: " << s1.getName() << endl;
         cout << "Music Started!" << endl;
         music.play();
+        
         Interface_::gotox(102);
         Interface_::gotoy(18);
         cout << "Voloume: ";
@@ -887,28 +773,14 @@ public:
         }
     }
 };
-void Suggestions::call_controller(int index)
-{
-    Controller::player(suggestions[index].song, 0);
-}
 
 int main()
 {
     system("cls");
     Interface_::display_interace();
     Controller::Main_Menu();
-    // s1.load_suggestion_from_json();
-    // s1.display_suggestions();
-    // s1.sort_suggestions();
-    // s1.display_suggestions();
-    // sleep(200);
-    // Song s1("hello", "Heyyy");
-    // Song s2("bello", "jello");
-    // Song s3("tello", "jettto");
-    // Suggestions su1;
-    // su1.add_suggestion_to_json(s1);
-    // su1.add_suggestion_to_json(s2);
-    // su1.add_suggestion_to_json(s3);
-
+   
+    // Suggestions s1;
+    // s1.add_suggestion_to_json(song1);
     return 0;
 }
