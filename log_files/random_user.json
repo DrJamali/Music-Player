@@ -1,6 +1,6 @@
 {
     "password": "1234567",
-    "playlists": [
+    "playlists":[
         {
             "name": "untitled",
             "songs": [
@@ -21,7 +21,7 @@
                     "name": "Ki Muhammad SAW se wafa tune"
                 }
             ]
-        }
+        } 
     ],
     "username": "Random_User"
 }

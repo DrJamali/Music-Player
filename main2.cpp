@@ -17,6 +17,7 @@ using namespace std;
 using json = nlohmann::json;
 int Old_User_Flag = 0;
 int width;
+
 class Song
 {
 protected:
@@ -67,7 +68,7 @@ public:
 
 class Qawali : public Song
 {
-    static int qawali_played;
+    
 
 public:
     Qawali() = default;
@@ -78,7 +79,6 @@ public:
 };
 class Naat : public Song
 {
-    static int Naat_played;
 
 public:
     Naat() = default;
@@ -89,8 +89,6 @@ public:
 };
 class Pop_Song : public Song
 {
-    static int Pop_played;
-
 public:
     Pop_Song() = default;
     Pop_Song(string name, string address) : Song(name, address)
@@ -100,8 +98,7 @@ public:
 };
 class Other_Song : public Song
 {
-    static int other_played;
-
+    
 public:
     Other_Song() = default;
     Other_Song(string name, string address) : Song(name, address)
@@ -151,15 +148,15 @@ public:
         json user_json;
 
         // int arr [songs.size()];
-        vector<json> arr;
+        vector<json> song_arr;
 
         for (int i = 0; i < songs.size(); i++)
         {
-            arr.push_back(songs[i].to_json());
+            song_arr.push_back(songs[i].to_json());
         }
 
         user_json["name"] = name;
-        user_json["songs"] = arr;
+        user_json["songs"] = song_arr;
         // You may also want to include playlists and songs here if needed
         return user_json;
     }
@@ -170,10 +167,10 @@ public:
 
         // Assuming you have a 'songs' array in your JSON representing the playlist's songs
         json songs_json = playlist_json.at("songs");
-        for (const auto &song_json : songs_json)
+        for ( auto &song_json : songs_json)
         {
-            Song *S1 = Song::from_json(song_json);
-            P1->songs.push_back(*S1);
+            
+            P1->songs.push_back(*(Song::from_json(song_json)));
         }
 
         return P1;
@@ -198,7 +195,7 @@ public:
         this->username = username;
         this->password = password;
     }
-    json to_json() const
+    json to_json() 
     {
         json user_json;
 
@@ -214,7 +211,7 @@ public:
         return user_json;
     }
     // Deserialize the User object from JSON
-    static User *from_json(const json &user_json)
+    static User *from_json( json &user_json)
     {
         User *user = new User();
         user->username = user_json.at("username").get<string>();
@@ -223,8 +220,8 @@ public:
         // Deserialize playlists
         if (user_json.find("playlists") != user_json.end())
         {
-            const json &playlists_json = user_json["playlists"];
-            for (const auto &playlist_json : playlists_json)
+             json playlists_json = user_json["playlists"];
+            for ( auto playlist_json : playlists_json)
             {
                 user->playlists.push_back(*(Playlist::from_json(playlist_json)));
             }
@@ -259,6 +256,7 @@ public:
             cout << "Playlist Songs: " << endl;
             playlists[i].display_songs();
         }
+        
     }
 };
 
@@ -321,43 +319,122 @@ public:
 };
 class Suggestions
 {
-    string time;
+    int time;
+    Song song;
+    int count;
 
 public:
-    string get_time()
+    vector<Suggestions> suggestions;
+
+    int get_time()
     {
         std::time_t currentTime = std::time(nullptr);
 
         // Convert the time to a local time structure
-        std::tm *timeInfo = std::localtime(&currentTime);
+        tm *timeInfo = localtime(&currentTime);
 
-        // Extract the time components
-        string hours = to_string(timeInfo->tm_hour);
-        string minutes = to_string(timeInfo->tm_min);
-        string seconds = to_string(timeInfo->tm_sec);
-        string time_ = hours + ":" + minutes + ":" + seconds;
-        return time_;
+        return timeInfo->tm_hour;
     }
     void add_suggestion_to_json(Song s1)
     {
+        song = s1;
         time = get_time();
-        json new_suggestion = s1.to_json();
+        json new_suggestion = song.to_json();
         new_suggestion["Time"] = time;
-
         // Read existing content from the file
         std::ifstream file_in(".\\log_files\\suggestions.json");
         json existing_content;
         file_in >> existing_content;
         file_in.close();
-
         // Add the new suggestion to the existing content
         existing_content.push_back(new_suggestion);
-
         // Write the modified content back to the file
         std::ofstream file_out(".\\log_files\\suggestions.json");
         file_out << std::setw(4) << existing_content;
         file_out.close();
     }
+    void load_suggestion_from_json()
+    {
+        json loaded;
+        ifstream file_in(".\\log_files\\suggestions.json");
+        file_in >> loaded;
+        static int quater;
+        if (get_time() <= 6)
+        {
+            quater = 6;
+        }
+        else if (get_time() <= 12)
+        {
+            quater = 12;
+        }
+        else if (get_time() <= 18)
+        {
+            quater = 18;
+        }
+        else if (get_time() <= 24)
+        {
+            quater = 24;
+        }
+
+        for (auto &x : loaded)
+        {
+            if (x.at("Time").get<int>() >= quater)
+            {
+                continue;
+            }
+            Suggestions new_suggestions;
+            new_suggestions.song.setName(x.at("name").get<string>());
+            new_suggestions.song.setAddress(x.at("address").get<string>());
+            new_suggestions.time = (x.at("Time").get<int>());
+            this->suggestions.push_back(new_suggestions);
+        }
+    }
+    void sort_suggestions()
+    {
+        for (int i = 0; i < suggestions.size(); i++)
+        {
+            Suggestions &s1 = suggestions[i]; // Use a reference here
+            s1.count = 1;
+
+            for (int j = i + 1; j < suggestions.size(); j++)
+            {
+                if (s1.song.getName() == suggestions[j].song.getName())
+                {
+                    s1.count++;
+                    suggestions.erase(suggestions.begin() + j);
+                    j--; // Adjust the index after erasing an element
+                }
+            }
+        }
+        for (int i = 0; i < suggestions.size() - 1; i++)
+        {
+            for (int j = i + 1; j < suggestions.size(); j++)
+            {
+                if (suggestions[i].count < suggestions[j].count)
+                {
+                    swap(suggestions[j], suggestions[i]);
+                }
+            }
+        }
+    }
+    void display_suggestions()
+    {
+        this->load_suggestion_from_json();
+        sort_suggestions();
+        int i;
+        for (auto x : suggestions)
+        {
+            cout<<"Song number: "<<i<<endl;
+            cout << x.song.getAddress() << endl;
+            cout << x.song.getName() << endl;
+            cout << x.count << endl;
+        }
+        cout<<"Select the song you want to listen"<<endl;
+        int index;
+        cin >> index;
+        call_controller(index);
+    }
+    void call_controller(int index);
 };
 class Controller
 {
@@ -366,33 +443,33 @@ public:
     static void addSong(User user, Playlist playlist, Song song) {}
     static User *createUser()
     {
-
+         string username;
+            string password;
         cout << "Hey Welcome to our Music Player" << endl;
         cout << "Press 1 for Signing in" << endl;
         cout << "Press 2 for Signing up" << endl;
         char ch = getch();
         if (ch == '2')
         {
-            string name;
-            string password;
+           
             cout << "Enter your Username" << endl;
-            cin >> name;
+            cin >> username;
             cout << "Enter your Password" << endl;
             cin >> password;
             Old_User_Flag = 0;
-            return new User(name, password);
+            return new User(username, password);
         }
         else if (ch == '1')
         {
             User *U1 = new User();
-            string username, password, saved_pass;
+            
             cout << "Enter Your Username" << endl;
             cin >> username;
             U1 = Controller::json_from_file(username);
             cout << "Enter Your Password" << endl;
             cin >> password;
-            saved_pass = U1->get_password();
-            if (saved_pass == password)
+            
+            if (U1->get_password() == password)
             {
                 cout << "Jaane doo" << endl;
                 Old_User_Flag = 1;
@@ -400,12 +477,15 @@ public:
             }
             else
             {
-                cout << "Tu chutti kar mera puat" << endl;
+                cout << "Your Password is incorrect" << endl;
+                sleep(5);
+                return createUser();
             }
         }
     }
     static Song *create_song()
     {
+        
 
         string name;
         string address;
@@ -420,24 +500,24 @@ public:
              << "3 for Qawali" << endl
              << "4 for any other " << endl;
         song_type = getch();
-        Song *S1;
+        
         if (song_type == '1')
         {
-            S1 = new Pop_Song(name, address);
+            return new Pop_Song(name, address);
         }
         else if (song_type == '2')
         {
-            S1 = new Naat(name, address);
+            return new Naat(name, address);
         }
         else if (song_type == '3')
         {
-            S1 = new Qawali(name, address);
+            return new Qawali(name, address);
         }
         else
         {
-            S1 = new Other_Song(name, address);
+            return new Other_Song(name, address);
         }
-        return S1;
+        
     }
     static void create_playlist(User &u1)
     {
@@ -447,6 +527,7 @@ public:
         char ch = getch();
         if (ch == '1')
         {
+            u1.display_playlist();
             cout << "Enter the number of playlist in which you want to add song" << endl;
             cin >> index;
             Playlist *p2 = u1.get_playlist(index);
@@ -497,17 +578,15 @@ public:
             ifstream infile(file_name);
             json loaded_json;
             infile >> loaded_json;
-            User *loaded_user = User::from_json(loaded_json);
-            return loaded_user;
+            return (User::from_json(loaded_json));
         }
     }
     static void Main_Menu()
     {
         User *U1 = Controller::createUser();
-        Playlist *untitled;
         if (Old_User_Flag == 0)
         {
-
+        Playlist *untitled;
             untitled = new Playlist("untitled");
             U1->create_playlist(untitled);
         }
@@ -521,14 +600,16 @@ public:
             cout << "To remove a song press 2" << endl;
             cout << "TO add a new Playlist press 3" << endl;
             cout << "To display Playlists and Songs Press 4" << endl;
-            cout << "To save your data press s" << endl;
+            cout << "To save your data press 5" << endl;
+            cout<<"To go to suggestions press 6" << endl;
+            cout << "To Find the any song press f " << endl;
             ch = getch();
             if (ch == '1')
             {
                 cout << "Press Enter to add songs" << endl;
                 cin.ignore();
                 Song *S1 = Controller::create_song();
-                U1->playlists[0].add_songs_to_playlist(S1);
+                U1->playlists[0].songs.push_back(*S1);
                 cout << "Song deleted successfully..." << endl;
                 U1->display_playlist();
             }
@@ -563,9 +644,45 @@ public:
             {
                 Controller::player_menu(*U1);
             }
-            else if (ch == 's')
+            else if (ch == '5')
             {
                 Controller::json_to_file(*U1);
+            }
+            else if (ch == '6')
+            {
+                cout << "S accepted" << endl;
+                Suggestions s1;
+                s1.display_suggestions();
+            }
+            else if (ch == 'f')
+            {
+                string song_name;
+                int flag;
+                cout << "Enter your Song name: " << endl;
+                cin.ignore();
+                getline(cin, song_name);
+
+                for (int i = 0; i < U1->playlists.size(); i++)
+                {
+                    flag = 0;
+                    for (int j = 0; j < U1->playlists[i].songs.size(); j++)
+                    {
+                        if (U1->playlists[i].songs[j].getName() == song_name)
+                        {
+                            cout << "Your Song is in... "
+                                 << "Playlist No: " << i << "Song Number: " << j << endl;
+                            flag = 1;
+                        }
+                        cout<<U1->playlists[i].songs[j].getName()<<endl;
+                        cout<<"Song name is "<<song_name<<endl;
+                    }
+                }
+                if (flag == 0)
+                {
+
+                    cout << "Found Nothing" << endl
+                         << "Try with different name" << endl;
+                }
             }
             else
             {
@@ -616,11 +733,11 @@ public:
             {
                 cout << "Select a Song number" << endl;
                 cin >> index;
-                Song s1 = p1.songs[index];
+                
                 loop_flag = 1;
                 while (loop_flag == 1)
                 {
-                    loop_flag = Controller::player(s1, 0);
+                    loop_flag = Controller::player(p1.songs[index], 0);
                 }
             }
             else if (ch == 'm')
@@ -632,6 +749,8 @@ public:
 
     static int player(Song s1, bool loop_playlist)
     {
+        Suggestions su1;
+        su1.add_suggestion_to_json(s1);
         system("cls");
         Interface_::display_interace();
         float volume;
@@ -773,13 +892,15 @@ public:
         }
     }
 };
-
+void Suggestions::call_controller(int index)
+{
+    Controller::player(suggestions[index].song,0);
+}
 int main()
 {
     system("cls");
     Interface_::display_interace();
     Controller::Main_Menu();
-   
     // Suggestions s1;
     // s1.add_suggestion_to_json(song1);
     return 0;
